@@ -8,6 +8,4 @@ venv/
 .idea/
 
 # outputs
-figures/*.png
-!figures/.gitkeep
 *.pt

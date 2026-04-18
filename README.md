@@ -46,24 +46,57 @@ $$-(u_{xx} + u_{yy}) = f(x, y), \quad (x, y) \in (0, 1)^2, \quad u = 0 \text{ on
 
 With $f = 2\pi^2 \sin(\pi x) \sin(\pi y)$, the solution is $u = \sin(\pi x)\sin(\pi y)$.
 
+## Results
+
+Numbers from running on my laptop (CPU only, seeds fixed):
+
+| Problem | Method | L2 error |
+|---|---|---|
+| 1D heat equation | PINN (5000 epochs) | 1.15e-3 |
+| 1D heat equation | Crank-Nicolson FDM (101 x 1001 grid) | 1.64e-5 |
+| 1D wave equation | PINN (6000 epochs) | 2.91e-3 |
+| 2D Poisson equation | PINN (8000 epochs) | 6.55e-3 |
+
+Plots are in `figures/`.
+
+### 1D heat equation
+
+PINN vs. analytical, full $(x, t)$ domain:
+
+![heat](figures/heat.png)
+
+Slices at fixed times (solid = PINN, dashed = analytical — overlap almost perfectly):
+
+![heat slices](figures/heat_slices.png)
+
+### 1D wave equation
+
+![wave](figures/wave.png)
+
+### 2D Poisson equation
+
+![poisson](figures/poisson.png)
+
+### Classical FDM baseline for the heat equation
+
+![fdm heat](figures/fdm_heat.png)
+
 ## FDM vs. PINN
 
-`fdm_heat.py` implements the Crank-Nicolson scheme for the heat equation. At each timestep it solves a tridiagonal linear system with `scipy.linalg.solve_banded`.
+For the heat equation on this simple domain, the classical FDM wins on every axis:
 
-For the heat equation on this simple domain, the classical FDM wins on every axis I looked at:
-
-- FDM L2 error is typically around $10^{-5}$ or better on a $101 \times 1001$ grid.
-- PINN L2 error sits around $10^{-3}$ to $10^{-4}$ with 5-6k training epochs.
-- FDM solves in under a second. PINN training takes a few minutes on a laptop CPU.
+- FDM L2 error is ~1.6e-5 on a $101 \times 1001$ grid.
+- PINN L2 error sits around 1e-3 after 5-6k epochs.
+- FDM solves in under a second. PINN training takes a few minutes on CPU.
 
 That is expected. PINNs become more interesting when:
 
 - The domain is irregular (meshing is annoying).
-- There is no easy analytical or grid-based method.
+- There is no easy grid-based method.
 - You want to solve an inverse problem (recover a parameter from data).
 - You need a continuous representation of $u$ rather than a grid.
 
-For textbook PDEs on a square, classical numerics is still the right tool. I think that is worth saying out loud — PINNs are interesting but not a silver bullet.
+For textbook PDEs on a square, classical numerics is still the right tool. PINNs are interesting but not a silver bullet.
 
 ## Run
 

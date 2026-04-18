@@ -113,6 +113,29 @@ def plot(X, T, u_pred, u_exact, save="figures/heat.png"):
     print(f"saved {save}")
 
 
+@torch.no_grad()
+def plot_slices(model, times=(0.0, 0.25, 0.5, 0.75, 1.0), save="figures/heat_slices.png"):
+    # compare PINN vs. analytical at a few fixed times
+    x = np.linspace(0, 1, 200)
+    fig, ax = plt.subplots(figsize=(7, 5))
+    for t in times:
+        xt = torch.tensor(
+            np.stack([x, np.full_like(x, t)], axis=-1),
+            dtype=torch.float32,
+        )
+        u_pred = model(xt[:, 0:1], xt[:, 1:2]).numpy().squeeze()
+        u_ex = u_true(x, t)
+        line, = ax.plot(x, u_ex, "--", alpha=0.6)
+        ax.plot(x, u_pred, color=line.get_color(), label=f"t = {t}")
+    ax.set_xlabel("x")
+    ax.set_ylabel("u(x, t)")
+    ax.set_title("heat equation: PINN (solid) vs. analytical (dashed)")
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(save, dpi=120)
+    print(f"saved {save}")
+
+
 if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
@@ -123,3 +146,4 @@ if __name__ == "__main__":
     import os
     os.makedirs("figures", exist_ok=True)
     plot(X, T, u_pred, u_exact)
+    plot_slices(model)

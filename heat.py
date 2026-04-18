@@ -138,6 +138,25 @@ def plot_slices(model, times=(0.0, 0.25, 0.5, 0.75, 1.0), save="figures/heat_sli
     print(f"saved {save}")
 
 
+def export_json(X, T, u_pred, u_exact, path):
+    import json, os
+    err = np.abs(u_pred - u_exact)
+    data = {
+        "name": "heat",
+        "x": X[0, :].tolist(),
+        "t": T[:, 0].tolist(),
+        "u_pinn": u_pred.tolist(),
+        "u_exact": u_exact.tolist(),
+        "l2_error": float(np.sqrt((err**2).mean())),
+        "max_error": float(err.max()),
+        "params": {"alpha": ALPHA},
+    }
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f)
+    print(f"exported {path}")
+
+
 if __name__ == "__main__":
     torch.manual_seed(0)
     np.random.seed(0)
@@ -149,3 +168,4 @@ if __name__ == "__main__":
     os.makedirs("figures", exist_ok=True)
     plot(X, T, u_pred, u_exact)
     plot_slices(model)
+    export_json(X, T, u_pred, u_exact, "data/heat.json")

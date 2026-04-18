@@ -93,9 +93,37 @@ def plot_solution(model, save="figures/wave.png"):
     print(f"saved {save}")
 
 
+@torch.no_grad()
+def export_json(model, path):
+    import json
+    nx, nt = 100, 100
+    x = np.linspace(0, 1, nx)
+    t = np.linspace(0, 1, nt)
+    X, T = np.meshgrid(x, t)
+    xt = torch.tensor(np.stack([X.ravel(), T.ravel()], -1), dtype=torch.float32)
+    u_pred = model(xt[:, 0:1], xt[:, 1:2]).numpy().reshape(X.shape)
+    u_ex = u_true(X, T)
+    err = np.abs(u_pred - u_ex)
+    data = {
+        "name": "wave",
+        "x": x.tolist(),
+        "t": t.tolist(),
+        "u_pinn": u_pred.tolist(),
+        "u_exact": u_ex.tolist(),
+        "l2_error": float(np.sqrt((err**2).mean())),
+        "max_error": float(err.max()),
+        "params": {"c": C},
+    }
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f)
+    print(f"exported {path}")
+
+
 if __name__ == "__main__":
     torch.manual_seed(1)
     np.random.seed(1)
     os.makedirs("figures", exist_ok=True)
     model = train()
     plot_solution(model)
+    export_json(model, "data/wave.json")

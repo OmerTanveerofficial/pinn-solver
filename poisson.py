@@ -87,9 +87,36 @@ def plot_solution(model, save="figures/poisson.png"):
     print(f"saved {save}")
 
 
+@torch.no_grad()
+def export_json(model, path):
+    import json
+    n = 100
+    x = np.linspace(0, 1, n)
+    y = np.linspace(0, 1, n)
+    X, Y = np.meshgrid(x, y)
+    xy = torch.tensor(np.stack([X.ravel(), Y.ravel()], -1), dtype=torch.float32)
+    u_pred = model(xy[:, 0:1], xy[:, 1:2]).numpy().reshape(X.shape)
+    u_ex = u_true(X, Y)
+    err = np.abs(u_pred - u_ex)
+    data = {
+        "name": "poisson",
+        "x": x.tolist(),
+        "y": y.tolist(),
+        "u_pinn": u_pred.tolist(),
+        "u_exact": u_ex.tolist(),
+        "l2_error": float(np.sqrt((err**2).mean())),
+        "max_error": float(err.max()),
+    }
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f)
+    print(f"exported {path}")
+
+
 if __name__ == "__main__":
     torch.manual_seed(2)
     np.random.seed(2)
     os.makedirs("figures", exist_ok=True)
     model = train()
     plot_solution(model)
+    export_json(model, "data/poisson.json")

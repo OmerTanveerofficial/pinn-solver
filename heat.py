@@ -40,7 +40,9 @@ def sample_points(N_f=10000, N_b=200, N_i=200):
     return x_f, t_f, t_b, x_b0, x_b1, x_i, t_i, u_i
 
 
-def train(epochs=5000, lr=1e-3):
+def train(epochs=5000, lr=1e-3, w_bc=10.0, w_ic=10.0):
+    # boundary and initial losses need to be weighted higher,
+    # otherwise the pde term dominates and the network ignores them
     model = PINN(in_dim=2)
     opt = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -65,7 +67,7 @@ def train(epochs=5000, lr=1e-3):
         u_pred_i = model(x_i, t_i)
         ic = ((u_pred_i - u_i) ** 2).mean()
 
-        loss = pde + bc + ic
+        loss = pde + w_bc * bc + w_ic * ic
         loss.backward()
         opt.step()
 
